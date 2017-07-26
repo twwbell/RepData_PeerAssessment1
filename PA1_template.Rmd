@@ -1,7 +1,7 @@
 ---
 title: "RepData Peer Assessment 1"
 author: "Thomas Bell"
-date: "7/23/2017"
+date: "7/27/2017"
 output: html_document
 ---
 
@@ -34,9 +34,9 @@ act_median <- median(aggr_days$steps)
 
 2. Calculate and report the **mean** and **median** total number of steps taken per day
 
-The mean of the total number of steps taken per day is `r act_mean`
+The mean of the total number of steps taken per day is **`r act_mean`**
 
-The median of the total number of steps taken per day is `r act_median`
+The median of the total number of steps taken per day is **`r act_median`**
 
 
 ## What is the average daily activity pattern?
@@ -52,7 +52,7 @@ max_interval <- aggr_interval[which.max(aggr_interval$steps),]
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-The 5-minute interval of `r max_interval$interval` contains the maximum number of steps, which is `r max_interval$steps`.
+The 5-minute interval of **`r max_interval$interval`** contains the maximum number of steps, which is **`r max_interval$steps`**
 
 ## Imputing missing values
 
@@ -62,12 +62,11 @@ bias into some calculations or summaries of the data.
 
 ```{r missing values}
 misvalues <- sum(is.na(data$steps))
-
 ```
 
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
 
-The total number of missing values in the dataset is `r misvalues`. 
+The total number of missing values in the dataset is **`r misvalues`**
 
 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
@@ -89,9 +88,9 @@ act_mean_imp <- format(mean(aggr_days_imp$steps), scientific = FALSE)
 act_median_imp <- format(median(aggr_days_imp$steps), scientific = FALSE)
 ```
 
-The mean of the total number of steps taken per day (with imputed missing values) is `r act_mean_imp`
+The mean of the total number of steps taken per day (with imputed missing values) is **`r act_mean_imp`**
 
-The median of the total number of steps taken per day (with imputed missing values) is `r act_median_imp`
+The median of the total number of steps taken per day (with imputed missing values) is **`r act_median_imp`**
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -106,18 +105,18 @@ library(dplyr)
 data_imputed %>% mutate(day = as.POSIXlt(data_imputed$date)$wday) %>% mutate(day = ifelse(day %in% 1:5, "weekday", "weekend")) %>% mutate(day = factor(.$day, c("weekday","weekend"))) -> data_imp_days
 ```
 
-1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
+1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+For lack of a better method, weekend and weekdays are first subsetted. For both subsets an aggregate table is created with the average number of steps per interval. With cbind/rbind it is merged back into one single data set in order to create a panel plot with the Lattice system.
 
 ```{r time series panel, warning=FALSE, message=FALSE}
-
 aggr_weekday <- aggregate(steps ~ interval, data = subset(data_imp_days, day == "weekday"), mean)
+aggr_weekday <- cbind(aggr_weekday, day = "weekday")
 aggr_weekend <- aggregate(steps ~ interval, data = subset(data_imp_days, day == "weekend"), mean)
-
-par(mfrow = c(2,1))
-
-with(aggr_weekend, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
-with(aggr_weekday, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
+aggr_weekend <- cbind(aggr_weekend, day = "weekend")
+aggr_both <- rbind(aggr_weekday, aggr_weekend)
 
 library(lattice)
-
+attach(aggr_both)
+xyplot(steps~interval|day, type = "l", layout = c(1,2), xlab = "5-minute interval", main = "Time Series Average Number of Steps")
 ```
