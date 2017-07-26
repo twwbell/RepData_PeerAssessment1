@@ -12,28 +12,47 @@ output: html_document
 
 The following code is used to read the activity data into the memory of R. The zip archive **activity.zip** contains one file **activity.csv**. By calling the function unzip() from read.csv the text file is directly read from the archive and stored in a variable called *data*. With the function mutate() from the dplyr package the dates are converted into a Date-class in R.
 
-```{r loading and preprocessing the data, cache=TRUE, results='hide'}
+```{r loading and preprocessing, warning=FALSE, message=FALSE, cache=TRUE}
 library(dplyr)
+
 data <- read.csv(unzip("activity.zip"))
 data <- mutate(data, date = as.Date(date))
 ```
 
 ## What is mean total number of steps taken per day?
 
-For this part of the assignment, you can ignore the missing values in
-the dataset.
+The following code chunk plots a histogram of the total number of steps per day using the Base plotting system. Followed by a calculation of the mean and median of the total number of steps taken per day. In this part of the assignment missing values in the data set are ignored.
 
 1. Make a histogram of the total number of steps taken each day
 
+```{r total mean median}
+aggr_days <- aggregate(steps ~ date, data = data, sum)
+hist(aggr_days$steps, main = "Total Number of Steps", xlab = "Steps")
+act_mean <- format(mean(aggr_days$steps), scientific = FALSE)
+act_median <- median(aggr_days$steps)
+```
+
 2. Calculate and report the **mean** and **median** total number of steps taken per day
+
+The mean of the total number of steps taken per day is `r act_mean`
+
+The median of the total number of steps taken per day is `r act_median`
 
 
 ## What is the average daily activity pattern?
 
 1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
+```{r daily pattern}
+aggr_interval <- aggregate(steps ~ interval, data = data, mean)
+with(aggr_interval, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
+max_interval <- aggr_interval[which.max(aggr_interval$steps),]
+
+```
+
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
+The 5-minute interval of `r max_interval$interval` contains the maximum number of steps, which is `r max_interval$steps`.
 
 ## Imputing missing values
 
@@ -41,13 +60,38 @@ Note that there are a number of days/intervals where there are missing
 values (coded as `NA`). The presence of missing days may introduce
 bias into some calculations or summaries of the data.
 
+```{r missing values}
+misvalues <- sum(is.na(data$steps))
+
+```
+
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
+
+The total number of missing values in the dataset is `r misvalues`. 
 
 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
+The original data frame is left joined with the aggregated data frame of the previous question based on the *interval* number. The joined data frame is mutated to replace the NAs in the *steps* column with the average steps in the column which was joined. After this operation the joined column is dropped so that a single *steps* column remains, containing either actual observations or average measurements for an *interval* on a certain date.
+
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
+```{r impute missing values, warning=FALSE, message=FALSE}
+library(dplyr)
+data %>% left_join(aggr_interval, by = c("interval", "interval")) %>% mutate(steps.x = as.double(steps.x)) %>% mutate(steps.x = if_else(is.na(steps.x), steps.y, steps.x)) %>% select(-steps.y) %>% rename(steps = steps.x)-> data_imputed
+```
+
 4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r total mean median imputed}
+aggr_days_imp <- aggregate(steps ~ date, data = data_imputed, sum)
+hist(aggr_days_imp$steps, main = "Total Number of Steps (imputed missing values)", xlab = "Steps")
+act_mean_imp <- format(mean(aggr_days_imp$steps), scientific = FALSE)
+act_median_imp <- format(median(aggr_days_imp$steps), scientific = FALSE)
+```
+
+The mean of the total number of steps taken per day (with imputed missing values) is `r act_mean_imp`
+
+The median of the total number of steps taken per day (with imputed missing values) is `r act_median_imp`
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -57,4 +101,23 @@ the dataset with the filled-in missing values for this part.
 
 1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
+```{r days factor}
+library(dplyr)
+data_imputed %>% mutate(day = as.POSIXlt(data_imputed$date)$wday) %>% mutate(day = ifelse(day %in% 1:5, "weekday", "weekend")) %>% mutate(day = factor(.$day, c("weekday","weekend"))) -> data_imp_days
+```
+
 1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
+
+```{r time series panel, warning=FALSE, message=FALSE}
+
+aggr_weekday <- aggregate(steps ~ interval, data = subset(data_imp_days, day == "weekday"), mean)
+aggr_weekend <- aggregate(steps ~ interval, data = subset(data_imp_days, day == "weekend"), mean)
+
+par(mfrow = c(2,1))
+
+with(aggr_weekend, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
+with(aggr_weekday, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
+
+library(lattice)
+
+```
