@@ -14,7 +14,7 @@ output:
 
 The following code is used to read the activity data into the memory of R. The zip archive **activity.zip** contains one file **activity.csv**. By calling the function unzip() from read.csv the text file is directly read from the archive and stored in a variable called *data*. With the function mutate() from the dplyr package the dates are converted into a Date-class in R.
 
-```{r loading and preprocessing, warning=FALSE, message=FALSE, cache=TRUE}
+```{r loading, warning=FALSE, message=FALSE, cache=TRUE}
 library(dplyr)
 
 data <- read.csv(unzip("activity.zip"))
@@ -27,7 +27,7 @@ The following code chunk plots a histogram of the total number of steps per day 
 
 1. Make a histogram of the total number of steps taken each day
 
-```{r total mean median}
+```{r total-mean-median}
 aggr_days <- aggregate(steps ~ date, data = data, sum)
 hist(aggr_days$steps, main = "Total Number of Steps", xlab = "Steps")
 act_mean <- format(mean(aggr_days$steps), scientific = FALSE)
@@ -45,7 +45,7 @@ The median of the total number of steps taken per day is **`r act_median`**
 
 1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r daily pattern}
+```{r daily-pattern}
 aggr_interval <- aggregate(steps ~ interval, data = data, mean)
 with(aggr_interval, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
 max_interval <- aggr_interval[which.max(aggr_interval$steps),]
@@ -62,7 +62,7 @@ Note that there are a number of days/intervals where there are missing
 values (coded as `NA`). The presence of missing days may introduce
 bias into some calculations or summaries of the data.
 
-```{r missing values}
+```{r missing-values}
 misvalues <- sum(is.na(data$steps))
 ```
 
@@ -76,14 +76,14 @@ The original data frame is left joined with the aggregated data frame of the pre
 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r impute missing values, warning=FALSE, message=FALSE}
+```{r impute-missing, warning=FALSE, message=FALSE}
 library(dplyr)
 data %>% left_join(aggr_interval, by = c("interval", "interval")) %>% mutate(steps.x = as.double(steps.x)) %>% mutate(steps.x = if_else(is.na(steps.x), steps.y, steps.x)) %>% select(-steps.y) %>% rename(steps = steps.x)-> data_imputed
 ```
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-```{r total mean median imputed}
+```{r total-mean-median-imputed}
 aggr_days_imp <- aggregate(steps ~ date, data = data_imputed, sum)
 hist(aggr_days_imp$steps, main = "Total Number of Steps (imputed missing values)", xlab = "Steps")
 act_mean_imp <- format(mean(aggr_days_imp$steps), scientific = FALSE)
@@ -102,7 +102,7 @@ the dataset with the filled-in missing values for this part.
 
 1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
-```{r days factor}
+```{r days-factor}
 library(dplyr)
 data_imputed %>% mutate(day = as.POSIXlt(data_imputed$date)$wday) %>% mutate(day = ifelse(day %in% 1:5, "weekday", "weekend")) %>% mutate(day = factor(.$day, c("weekday","weekend"))) -> data_imp_days
 ```
@@ -111,7 +111,7 @@ data_imputed %>% mutate(day = as.POSIXlt(data_imputed$date)$wday) %>% mutate(day
 
 For lack of a better method, weekend and weekdays are first subsetted. For both subsets an aggregate table is created with the average number of steps per interval. With cbind/rbind it is merged back into one single data set in order to create a panel plot with the Lattice system.
 
-```{r time series panel, warning=FALSE, message=FALSE}
+```{r time-series-panel, warning=FALSE, message=FALSE}
 aggr_weekday <- aggregate(steps ~ interval, data = subset(data_imp_days, day == "weekday"), mean)
 aggr_weekday <- cbind(aggr_weekday, day = "weekday")
 aggr_weekend <- aggregate(steps ~ interval, data = subset(data_imp_days, day == "weekend"), mean)

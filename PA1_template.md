@@ -29,7 +29,7 @@ aggr_days <- aggregate(steps ~ date, data = data, sum)
 hist(aggr_days$steps, main = "Total Number of Steps", xlab = "Steps")
 ```
 
-![](PA1_template_files/figure-html/total mean median-1.png)<!-- -->
+![](PA1_template_files/figure-html/total-mean-median-1.png)<!-- -->
 
 ```r
 act_mean <- format(mean(aggr_days$steps), scientific = FALSE)
@@ -53,7 +53,7 @@ aggr_interval <- aggregate(steps ~ interval, data = data, mean)
 with(aggr_interval, plot(interval, steps, type = "l", lwd = 2, col = "red", main = "Time Series Average Number of Steps", xlab = "5-minute intervals"))
 ```
 
-![](PA1_template_files/figure-html/daily pattern-1.png)<!-- -->
+![](PA1_template_files/figure-html/daily-pattern-1.png)<!-- -->
 
 ```r
 max_interval <- aggr_interval[which.max(aggr_interval$steps),]
@@ -98,7 +98,7 @@ aggr_days_imp <- aggregate(steps ~ date, data = data_imputed, sum)
 hist(aggr_days_imp$steps, main = "Total Number of Steps (imputed missing values)", xlab = "Steps")
 ```
 
-![](PA1_template_files/figure-html/total mean median imputed-1.png)<!-- -->
+![](PA1_template_files/figure-html/total-mean-median-imputed-1.png)<!-- -->
 
 ```r
 act_mean_imp <- format(mean(aggr_days_imp$steps), scientific = FALSE)
@@ -140,4 +140,4 @@ attach(aggr_both)
 xyplot(steps~interval|day, type = "l", layout = c(1,2), xlab = "5-minute interval", main = "Time Series Average Number of Steps")
 ```
 
-![](PA1_template_files/figure-html/time series panel-1.png)<!-- -->
+![](PA1_template_files/figure-html/time-series-panel-1.png)<!-- -->
